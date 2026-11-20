@@ -7,6 +7,7 @@ import { Puzzle } from '../engine/types';
 import { NumberTile } from '../components/NumberTile';
 import { RootStackParamList } from '../navigation/types';
 import { useProgress } from '../storage/ProgressContext';
+import { useFeedback } from '../audio/useFeedback';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
@@ -22,6 +23,7 @@ function starsForAttempts(wrongAttempts: number): number {
 export default function GameScreen({ route, navigation }: Props) {
   const { level } = route.params;
   const { recordWin } = useProgress();
+  const sfx = useFeedback();
 
   const [puzzle, setPuzzle] = useState<Puzzle>(() => generatePuzzle(level));
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -37,6 +39,7 @@ export default function GameScreen({ route, navigation }: Props) {
 
   function toggleTile(index: number) {
     if (locked) return;
+    sfx.tap();
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(index)) {
@@ -53,10 +56,12 @@ export default function GameScreen({ route, navigation }: Props) {
     const won = runningTotal === puzzle.target;
     if (won) {
       const stars = starsForAttempts(wrongAttempts);
+      sfx.correct();
       recordWin(level, stars);
       setFeedback('win');
       navigation.navigate('Win', { level, stars });
     } else {
+      sfx.wrong();
       setWrongAttempts((n) => n + 1);
       setFeedback('lose');
     }

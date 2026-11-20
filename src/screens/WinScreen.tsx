@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
+import { useFeedback } from '../audio/useFeedback';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Win'>;
 
 export default function WinScreen({ route, navigation }: Props) {
   const { level, stars } = route.params;
+  const sfx = useFeedback();
+
+  useEffect(() => {
+    sfx.win();
+    // Only on first mount of this celebration screen, not on every re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>

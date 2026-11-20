@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { setAudioModeAsync } from 'expo-audio';
 import { AuthProvider } from './src/storage/AuthContext';
 import { ProgressProvider } from './src/storage/ProgressContext';
 import { RootStackParamList } from './src/navigation/types';
@@ -25,6 +26,13 @@ const theme = {
 };
 
 export default function App() {
+  useEffect(() => {
+    // Short game SFX should still play when the phone's silent switch is on
+    // (players expect a tap/win sound even with ringer off) but shouldn't
+    // duck or interrupt whatever music they're already playing.
+    setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' });
+  }, []);
+
   return (
     <AuthProvider>
       <ProgressProvider>
