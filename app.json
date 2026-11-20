@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Pick 4",
+    "slug": "pick4-puzzle",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1b1b2f"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.pick4puzzle.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1b1b2f"
+      },
+      "package": "com.pick4puzzle.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
