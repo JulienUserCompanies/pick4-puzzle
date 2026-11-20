@@ -7,9 +7,13 @@ Tap any 4 numbers on the grid that add up to the target. Built with Expo
 
 1. Install [Node.js](https://nodejs.org) if you don't have it.
 2. In this folder: `npm install`
-3. `npm start` — this opens Expo's dev tools in your terminal/browser.
-4. Install the free **Expo Go** app on your phone (App Store / Play Store).
-5. Scan the QR code Expo prints. The game opens live on your phone, no
+3. Copy `.env.example` to `.env` and fill in your Supabase project's URL and
+   anon/publishable key (Project Settings → API Keys in the Supabase
+   dashboard). The app won't start without these — see "Accounts & backend"
+   below if you don't have a Supabase project yet.
+4. `npm start` — this opens Expo's dev tools in your terminal/browser.
+5. Install the free **Expo Go** app on your phone (App Store / Play Store).
+6. Scan the QR code Expo prints. The game opens live on your phone, no
    build or store account needed. Edits you make to the code show up
    instantly (hot reload).
 
@@ -27,8 +31,36 @@ Tap any 4 numbers on the grid that add up to the target. Built with Expo
 
 This is the MVP scope from the design doc: one screen, tap-to-select, a
 live running total with color feedback, win/lose, and a working difficulty
-curve (easy → mid → hard as the level number climbs). No accounts, ads, or
-backend — nothing to host or pay for yet.
+curve (easy → mid → hard as the level number climbs).
+
+## Accounts & backend (Supabase)
+
+- `supabase/migrations/0001_init.sql` — the full schema (`profiles`,
+  `progress`, `daily_challenges`, `daily_results`) with row-level security
+  policies. Run it in your project's SQL Editor (or `supabase db push` if
+  you use the CLI).
+- `src/lib/supabase.ts` — the client, reading `EXPO_PUBLIC_SUPABASE_URL` and
+  `EXPO_PUBLIC_SUPABASE_ANON_KEY` from `.env`.
+- `src/storage/AuthContext.tsx` — sign up, sign in, sign out, delete
+  account. Signing up automatically pushes any existing guest (on-device)
+  progress to the new account, so nothing is lost.
+- `src/storage/ProgressContext.tsx` — reads/writes `progress` from Supabase
+  when signed in, falls back to on-device storage as a guest or when
+  offline.
+- Players are **never forced to sign in** — the app works fully as a guest
+  from first launch; an account is offered (from Settings) to sync progress
+  across devices.
+- `supabase/functions/delete-account/` — an edge function for account
+  deletion (required by Apple's App Store guidelines once you collect
+  accounts). Deploy with `supabase functions deploy delete-account`, and
+  set its `SUPABASE_SERVICE_ROLE_KEY` secret in the Supabase dashboard
+  (Project Settings → Edge Functions) — never put that key in the app
+  itself.
+
+Still open from the accounts checklist: Sign in with Apple (required if you
+ever add Google/Facebook sign-in), the Daily Challenge/leaderboard UI, and
+the privacy policy page the App/Play Store will require once accounts are
+live.
 
 ## Going from "runs on my phone via Expo Go" to "live in the App Store"
 
