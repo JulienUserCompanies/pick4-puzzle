@@ -54,7 +54,7 @@ export default function WinScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1b1b2f',
+    backgroundColor: '#0a0a0a',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    color: '#ffffff',
+    color: '#f2f2ed',
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 20,
@@ -79,25 +79,25 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   star: {
-    color: '#45455e',
+    color: '#2a2a28',
     fontSize: 44,
   },
   starFilled: {
-    color: '#fbbf24',
+    color: '#c6ff3d',
   },
   actions: {
     width: '100%',
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#5b6cff',
+    backgroundColor: '#c6ff3d',
     paddingVertical: 16,
     borderRadius: 14,
     width: '100%',
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
+    color: '#0a0a0a',
     fontSize: 18,
     fontWeight: '700',
   },
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#8a8aa3',
+    color: '#6b6f67',
     fontSize: 16,
     fontWeight: '600',
   },

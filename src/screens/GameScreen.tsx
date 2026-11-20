@@ -78,13 +78,11 @@ export default function GameScreen({ route, navigation }: Props) {
   }
 
   const totalColor =
-    runningTotal === 0
-      ? '#8a8aa3'
-      : runningTotal === puzzle.target
-      ? '#4ade80'
+    runningTotal === puzzle.target
+      ? '#c6ff3d'
       : runningTotal > puzzle.target
-      ? '#f87171'
-      : '#8a8aa3';
+      ? '#ff9d42'
+      : '#6b6f67';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -147,7 +145,7 @@ export default function GameScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1b1b2f',
+    backgroundColor: '#0a0a0a',
     alignItems: 'center',
     paddingTop: 12,
     paddingHorizontal: 20,
@@ -160,21 +158,21 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   backArrow: {
-    color: '#e8e8f5',
+    color: '#f2f2ed',
     fontSize: 22,
   },
   levelLabel: {
-    color: '#8a8aa3',
+    color: '#6b6f67',
     fontSize: 16,
     fontWeight: '600',
   },
   targetLabel: {
-    color: '#8a8aa3',
+    color: '#6b6f67',
     fontSize: 16,
     marginTop: 12,
   },
   target: {
-    color: '#ffffff',
+    color: '#f2f2ed',
     fontSize: 56,
     fontWeight: '800',
     marginBottom: 8,
@@ -197,7 +195,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#5b6cff',
+    backgroundColor: '#c6ff3d',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 14,
@@ -208,7 +206,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   primaryButtonText: {
-    color: '#ffffff',
+    color: '#0a0a0a',
     fontSize: 18,
     fontWeight: '700',
   },
@@ -216,7 +214,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   secondaryButtonText: {
-    color: '#8a8aa3',
+    color: '#6b6f67',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -226,6 +224,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   lose: {
-    color: '#f87171',
+    color: '#ff9d42',
   },
 });

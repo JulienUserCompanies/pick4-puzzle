@@ -61,7 +61,11 @@ export default function HomeScreen({ navigation }: Props) {
             <Pressable
               disabled={!unlocked}
               onPress={() => navigation.navigate('Game', { level })}
-              style={[styles.levelTile, !unlocked && styles.levelTileLocked]}
+              style={[
+                styles.levelTile,
+                !unlocked && styles.levelTileLocked,
+                stars > 0 && styles.levelTileEarned,
+              ]}
               accessibilityLabel={unlocked ? `Level ${level}` : `Level ${level}, locked`}
             >
               {unlocked ? (
@@ -83,11 +87,11 @@ export default function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1b1b2f',
+    backgroundColor: '#0a0a0a',
     paddingTop: 12,
   },
   loadingText: {
-    color: '#8a8aa3',
+    color: '#6b6f67',
     fontSize: 16,
     textAlign: 'center',
     marginTop: 40,
@@ -100,12 +104,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    color: '#ffffff',
+    color: '#f2f2ed',
     fontSize: 32,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#8a8aa3',
+    color: '#6b6f67',
     fontSize: 14,
     marginTop: 2,
   },
@@ -113,12 +117,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2a2a42',
+    backgroundColor: '#131313',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingsIcon: {
-    color: '#e8e8f5',
+    color: '#f2f2ed',
     fontSize: 18,
   },
   grid: {
@@ -130,15 +136,20 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     margin: 6,
     borderRadius: 14,
-    backgroundColor: '#2a2a42',
+    backgroundColor: '#131313',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   levelTileLocked: {
     opacity: 0.35,
   },
+  levelTileEarned: {
+    borderColor: 'rgba(198,255,61,0.25)',
+  },
   levelNumber: {
-    color: '#ffffff',
+    color: '#f2f2ed',
     fontSize: 20,
     fontWeight: '700',
   },
@@ -151,10 +162,10 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   star: {
-    color: '#45455e',
+    color: '#2a2a28',
     fontSize: 11,
   },
   starFilled: {
-    color: '#fbbf24',
+    color: '#c6ff3d',
   },
 });

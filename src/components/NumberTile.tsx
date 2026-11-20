@@ -29,13 +29,16 @@ const styles = StyleSheet.create({
     flexBasis: '30%',
     aspectRatio: 1,
     borderRadius: 16,
-    backgroundColor: '#2a2a42',
+    backgroundColor: '#131313',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     margin: '1.5%',
   },
   tileSelected: {
-    backgroundColor: '#5b6cff',
+    backgroundColor: '#c6ff3d',
+    borderColor: '#c6ff3d',
   },
   tilePressed: {
     opacity: 0.8,
@@ -43,9 +46,9 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#e8e8f5',
+    color: '#f2f2ed',
   },
   valueSelected: {
-    color: '#ffffff',
+    color: '#0a0a0a',
   },
 });
