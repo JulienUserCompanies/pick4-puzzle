@@ -87,6 +87,7 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.modeGrid}>
           <ModeCard
             title="Classic"
+            subtitle={`Level ${progress.maxUnlockedLevel}`}
             emoji="🔢"
             onPress={() => navigation.navigate('Levels')}
             background={colors.cardAlt}
@@ -125,6 +126,7 @@ export default function HomeScreen({ navigation }: Props) {
 
 function ModeCard({
   title,
+  subtitle,
   emoji,
   onPress,
   background,
@@ -132,6 +134,7 @@ function ModeCard({
   badgeColors,
 }: {
   title: string;
+  subtitle?: string;
   emoji: string;
   onPress?: () => void;
   background: string;
@@ -154,6 +157,7 @@ function ModeCard({
         </LinearGradient>
       </View>
       <Text style={styles.modeTitle}>{title}</Text>
+      {subtitle && <Text style={styles.modeSubtitle}>{subtitle}</Text>}
       {comingSoon && (
         <View style={styles.comingSoonBadge}>
           <Text style={styles.comingSoonText}>Soon</Text>
@@ -378,6 +382,12 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: 16,
     fontWeight: '800',
+  },
+  modeSubtitle: {
+    color: colors.inkFaint,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
   },
   comingSoonBadge: {
     position: 'absolute',
