@@ -18,6 +18,13 @@
 drop trigger if exists on_auth_user_created on auth.users;
 drop function if exists public.handle_new_user();
 
+-- Stray objects from an unrelated app's SQL that got run against this
+-- project by mistake (a competitor-tracking tool — "followed_brands",
+-- plan/billing). None of this belongs to Pick 4; clean it all out.
+drop trigger if exists followed_brands_limit_check on public.followed_brands;
+drop function if exists public.enforce_follow_limit();
+drop table if exists public.followed_brands cascade;
+
 drop table if exists public.timed_results cascade;
 drop table if exists public.daily_results cascade;
 drop table if exists public.daily_challenges cascade;
