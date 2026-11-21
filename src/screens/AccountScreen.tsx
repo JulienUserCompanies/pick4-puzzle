@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../storage/AuthContext';
 import { useProgress } from '../storage/ProgressContext';
+import { colors, radii, shadows } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Account'>;
 
@@ -55,7 +56,7 @@ export default function AccountScreen({ navigation }: Props) {
         <Text style={styles.emailLabel}>Signed in as</Text>
         <Text style={styles.email}>{user?.email}</Text>
         <View style={styles.syncRow}>
-          <View style={[styles.syncDot, { backgroundColor: synced ? '#c6ff3d' : '#6b6f67' }]} />
+          <View style={[styles.syncDot, { backgroundColor: synced ? colors.success : colors.inkMuted }]} />
           <Text style={styles.syncLabel}>{synced ? 'Progress synced' : 'Not synced yet'}</Text>
         </View>
       </View>
@@ -66,7 +67,7 @@ export default function AccountScreen({ navigation }: Props) {
 
       <Pressable style={styles.dangerRow} onPress={handleDeleteAccount} disabled={deleting}>
         {deleting ? (
-          <ActivityIndicator color="#ff9d42" />
+          <ActivityIndicator color={colors.error} />
         ) : (
           <Text style={styles.dangerText}>Delete account</Text>
         )}
@@ -78,7 +79,7 @@ export default function AccountScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: colors.bg,
     paddingTop: 12,
     paddingHorizontal: 20,
   },
@@ -89,33 +90,32 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backArrow: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 22,
   },
   title: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   section: {
-    backgroundColor: '#131313',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
+    backgroundColor: colors.card,
+    borderRadius: radii.lg,
     padding: 16,
     marginBottom: 20,
+    ...shadows.soft,
   },
   emailLabel: {
-    color: '#6b6f67',
+    color: colors.inkFaint,
     fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
   },
   email: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 12,
   },
   syncRow: {
@@ -129,30 +129,29 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   syncLabel: {
-    color: '#9a9d95',
+    color: colors.inkFaint,
     fontSize: 13,
   },
   signOutRow: {
-    backgroundColor: '#131313',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
+    backgroundColor: colors.card,
+    borderRadius: radii.lg,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 20,
+    ...shadows.soft,
   },
   signOutText: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   dangerRow: {
     paddingVertical: 14,
     alignItems: 'center',
   },
   dangerText: {
-    color: '#ff9d42',
+    color: colors.error,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

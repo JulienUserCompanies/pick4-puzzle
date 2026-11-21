@@ -7,18 +7,21 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#1b1b2f"
+      "backgroundColor": "#FDECDA"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pick4puzzle.app"
+      "bundleIdentifier": "com.pick4puzzle.app",
+      "infoPlist": {
+        "NSMotionUsageDescription": "Pick 4 uses motion to add a subtle tilt effect on the win screen."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#1b1b2f"
+        "backgroundColor": "#FDECDA"
       },
       "package": "com.pick4puzzle.app"
     },

@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useProgress } from '../storage/ProgressContext';
 import { useAuth } from '../storage/AuthContext';
+import { colors, radii, shadows } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -58,8 +59,8 @@ export default function SettingsScreen({ navigation }: Props) {
           <Switch
             value={progress.soundEnabled}
             onValueChange={setSoundEnabled}
-            trackColor={{ false: '#2a2a28', true: '#c6ff3d' }}
-            thumbColor="#f2f2ed"
+            trackColor={{ false: colors.border, true: colors.orange }}
+            thumbColor={colors.white}
           />
         </View>
         <View style={styles.row}>
@@ -67,8 +68,8 @@ export default function SettingsScreen({ navigation }: Props) {
           <Switch
             value={progress.hapticsEnabled}
             onValueChange={setHapticsEnabled}
-            trackColor={{ false: '#2a2a28', true: '#c6ff3d' }}
-            thumbColor="#f2f2ed"
+            trackColor={{ false: colors.border, true: colors.orange }}
+            thumbColor={colors.white}
           />
         </View>
       </View>
@@ -89,7 +90,7 @@ export default function SettingsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: colors.bg,
     paddingTop: 12,
     paddingHorizontal: 20,
   },
@@ -100,47 +101,45 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backArrow: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 22,
   },
   title: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   accountRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#131313',
-    borderWidth: 1,
-    borderColor: 'rgba(198,255,61,0.2)',
-    borderRadius: 14,
+    backgroundColor: colors.card,
+    borderRadius: radii.lg,
     paddingHorizontal: 16,
     paddingVertical: 16,
     marginBottom: 20,
+    ...shadows.soft,
   },
   accountLabel: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 16,
     fontWeight: '700',
   },
   accountSub: {
-    color: '#9a9d95',
+    color: colors.inkFaint,
     fontSize: 13,
     marginTop: 2,
   },
   chevron: {
-    color: '#6b6f67',
+    color: colors.inkFaint,
     fontSize: 22,
   },
   section: {
-    backgroundColor: '#131313',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
+    backgroundColor: colors.card,
+    borderRadius: radii.lg,
     marginBottom: 20,
     overflow: 'hidden',
+    ...shadows.soft,
   },
   row: {
     flexDirection: 'row',
@@ -150,21 +149,21 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   rowLabel: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   dangerRow: {
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
   dangerText: {
-    color: '#ff9d42',
+    color: colors.error,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   aboutText: {
-    color: '#6b6f67',
+    color: colors.inkFaint,
     fontSize: 13,
     textAlign: 'center',
     paddingVertical: 14,

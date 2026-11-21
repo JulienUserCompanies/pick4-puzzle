@@ -13,6 +13,8 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../storage/AuthContext';
+import { GradientButton } from '../components/GradientButton';
+import { colors, radii } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Auth'>;
 
@@ -65,7 +67,7 @@ export default function AuthScreen({ navigation }: Props) {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#6b6f67"
+            placeholderTextColor={colors.inkMuted}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -75,7 +77,7 @@ export default function AuthScreen({ navigation }: Props) {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor="#6b6f67"
+            placeholderTextColor={colors.inkMuted}
             secureTextEntry
             autoComplete={mode === 'signUp' ? 'new-password' : 'password'}
             value={password}
@@ -84,17 +86,16 @@ export default function AuthScreen({ navigation }: Props) {
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Pressable
-            style={[styles.primaryButton, submitting && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <ActivityIndicator color="#0a0a0a" />
-            ) : (
-              <Text style={styles.primaryButtonText}>{mode === 'signUp' ? 'Create account' : 'Sign in'}</Text>
-            )}
-          </Pressable>
+          {submitting ? (
+            <ActivityIndicator color={colors.orange} style={{ marginTop: 8 }} />
+          ) : (
+            <GradientButton
+              label={mode === 'signUp' ? 'Create account' : 'Sign in'}
+              onPress={handleSubmit}
+              style={{ marginTop: 8, width: '100%' }}
+              glow={false}
+            />
+          )}
 
           <Pressable
             style={styles.switchModeButton}
@@ -120,7 +121,7 @@ export default function AuthScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: colors.bg,
   },
   flex: {
     flex: 1,
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   backArrow: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 22,
   },
   content: {
@@ -139,63 +140,46 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   title: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 26,
     fontWeight: '800',
     marginBottom: 8,
   },
   subtitle: {
-    color: '#6b6f67',
+    color: colors.inkFaint,
     fontSize: 14,
     marginBottom: 28,
     lineHeight: 20,
   },
   input: {
-    backgroundColor: '#131313',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: radii.sm,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 16,
     marginBottom: 12,
   },
   error: {
-    color: '#ff9d42',
+    color: colors.error,
     fontSize: 14,
     marginBottom: 12,
-  },
-  primaryButton: {
-    backgroundColor: '#c6ff3d',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  primaryButtonText: {
-    color: '#0a0a0a',
-    fontSize: 17,
-    fontWeight: '800',
   },
   switchModeButton: {
     marginTop: 20,
     alignItems: 'center',
   },
   switchModeText: {
-    color: '#c6ff3d',
+    color: colors.orange,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   guestButton: {
     marginTop: 24,
     alignItems: 'center',
   },
   guestButtonText: {
-    color: '#6b6f67',
+    color: colors.inkFaint,
     fontSize: 14,
     fontWeight: '600',
   },

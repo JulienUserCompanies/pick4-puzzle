@@ -21,17 +21,45 @@ Tap any 4 numbers on the grid that add up to the target. Built with Expo
 
 ## What's in here
 
-- `App.tsx` — entry point
+- `App.tsx` — entry point, navigator, Splash → Onboarding → Home flow
+- `src/theme.ts` — shared colors/radii/shadows/mascot assets, matching the
+  Claude Artifacts mockup's warm cream/orange look
 - `src/engine/` — the puzzle generator (guarantees a valid combo exists,
   tunes difficulty by level, rejects puzzles that are too easy/too hard for
   their tier)
 - `src/screens/GameScreen.tsx` — the whole game loop: grid, running total,
-  submit, win/lose feedback, next puzzle
+  submit, win/lose feedback, next puzzle (also plays a fetched Daily
+  Challenge puzzle when navigated to with `daily: true`)
+- `src/screens/WinScreen.tsx` — celebration screen: the bear mascot,
+  confetti, and a DeviceMotion-driven tilt (tilt your phone and the bear
+  leans with it — falls back to static if the sensor/permission isn't
+  available, e.g. on web or in the simulator)
+- `src/screens/HomeScreen.tsx` / `LevelsScreen.tsx` / `DailyScreen.tsx` /
+  `LeaderboardScreen.tsx` / `StatisticsScreen.tsx` / `ProfileScreen.tsx` —
+  the hub, classic level grid, Daily Challenge, today's leaderboard,
+  locally-computed stats, and the profile tab
 - `src/components/NumberTile.tsx` — a single tappable number tile
+  (Reanimated tap + pop animation)
+- `src/components/{GradientButton,Mascot,Confetti,BottomNav}.tsx` — shared
+  "juicy" UI building blocks used across the new screens
+- `assets/mascot/` — the bear mascot, one PNG per pose (idle, waving,
+  thinking, confused, celebrating)
 
-This is the MVP scope from the design doc: one screen, tap-to-select, a
-live running total with color feedback, win/lose, and a working difficulty
-curve (easy → mid → hard as the level number climbs).
+This started as the MVP scope from the original design doc (one screen,
+tap-to-select, win/lose, a working difficulty curve) and has since been
+reskinned and expanded to match the full mockup: Splash/Onboarding, a real
+Home hub with a Daily Challenge banner, and Leaderboard/Statistics/Profile
+tabs. Two things called out in the mockup don't exist here on purpose —
+**Timed** and **Weekly Challenge** modes are shown as "Coming soon" cards
+rather than built, since there's no game-mode logic or backend for either
+yet; building fake-looking-real buttons for them would be worse than
+leaving them honestly disabled.
+
+**New since the reskin:** `supabase/migrations/0002_leaderboard_profiles.sql`
+adds a public-read policy on `profiles.display_name` so the Daily Challenge
+leaderboard can show *other* players' names (0001's policy only let you
+read your own row). Run it the same way as 0001 (SQL Editor, or
+`supabase db push`) after pulling this.
 
 ## Accounts & backend (Supabase)
 

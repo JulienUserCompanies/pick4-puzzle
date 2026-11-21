@@ -1,6 +1,17 @@
+import { Puzzle } from '../engine/types';
+
 export type RootStackParamList = {
+  Splash: undefined;
+  Onboarding1: undefined;
+  Onboarding2: undefined;
   Home: undefined;
-  Game: { level: number };
+  Levels: undefined;
+  Daily: undefined;
+  Leaderboard: undefined;
+  Statistics: undefined;
+  Profile: undefined;
+  /** `dailyPuzzle` + `daily: true` together mean "play this exact puzzle, not a generated level". */
+  Game: { level: number; daily?: boolean; dailyPuzzle?: Puzzle };
   Win: { level: number; stars: number };
   Settings: undefined;
   Auth: undefined;
