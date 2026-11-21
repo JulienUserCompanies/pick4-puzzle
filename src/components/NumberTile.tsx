@@ -62,11 +62,7 @@ export function NumberTile({ value, selected, onPress, disabled }: Props) {
       <Animated.View style={[styles.ledge, { backgroundColor: shadowColor }, animatedStyle]}>
         <LinearGradient
           colors={selected ? GREEN : BLUE}
-          style={[
-            styles.tile,
-            selected && styles.tileSelected,
-            disabled && !selected && styles.tileDisabled,
-          ]}
+          style={[styles.tile, disabled && !selected && styles.tileDisabled]}
         >
           <Text style={styles.value}>{value}</Text>
           {selected && (
@@ -84,28 +80,24 @@ const styles = StyleSheet.create({
   wrap: {
     flexBasis: '30%',
     aspectRatio: 1,
-    margin: '1.5%',
+    margin: '1.65%',
   },
   ledge: {
     flex: 1,
-    borderRadius: radii.md,
-    paddingBottom: 4,
+    borderRadius: radii.lg,
+    paddingBottom: 5,
   },
   tile: {
     flex: 1,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tileSelected: {
-    borderWidth: 2,
-    borderColor: '#3ED66B',
   },
   tileDisabled: {
     opacity: 0.5,
   },
   value: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '800',
     color: colors.white,
   },
