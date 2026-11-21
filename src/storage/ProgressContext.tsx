@@ -15,6 +15,8 @@ interface ProgressContextValue {
   /** True when progress is being read from/written to the account, not just this device. */
   synced: boolean;
   recordWin: (level: number, stars: number) => void;
+  /** Updates the device-local Timed best if `solved` beats it. Returns whether it was a new best. */
+  recordTimedBest: (solved: number) => boolean;
   setSoundEnabled: (enabled: boolean) => void;
   setHapticsEnabled: (enabled: boolean) => void;
   resetProgress: () => void;
@@ -51,20 +53,21 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     async function load() {
       setLoading(true);
       if (user) {
-        const remote = await fetchRemoteProgress(user.id);
+        const [remote, local] = await Promise.all([fetchRemoteProgress(user.id), loadProgress()]);
         if (cancelled) return;
         if (remote) {
-          setProgress(remote);
+          // timedBest is device-local only (see progress.ts) — fetchRemoteProgress
+          // always returns 0 for it, so carry over whatever was cached here already
+          // rather than letting a sign-in wipe out today's Timed best from view.
+          const merged: ProgressState = { ...remote, timedBest: local.timedBest };
+          setProgress(merged);
           setSynced(true);
-          saveProgress(remote); // keep a local cache as an offline fallback
+          saveProgress(merged); // keep a local cache as an offline fallback
         } else {
           // Supabase unreachable — fall back to whatever's cached locally
           // rather than showing an empty board.
-          const local = await loadProgress();
-          if (!cancelled) {
-            setProgress(local);
-            setSynced(false);
-          }
+          setProgress(local);
+          setSynced(false);
         }
       } else {
         const local = await loadProgress();
@@ -114,6 +117,15 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     [user]
   );
 
+  const recordTimedBest = useCallback(
+    (solved: number) => {
+      const isNewBest = solved > progress.timedBest;
+      if (isNewBest) persist({ ...progress, timedBest: solved });
+      return isNewBest;
+    },
+    [progress, persist]
+  );
+
   const setSoundEnabled = useCallback(
     (enabled: boolean) => persist({ ...progress, soundEnabled: enabled }),
     [progress, persist]
@@ -139,6 +151,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         loading,
         synced,
         recordWin,
+        recordTimedBest,
         setSoundEnabled,
         setHapticsEnabled,
         resetProgress,

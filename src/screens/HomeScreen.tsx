@@ -95,8 +95,9 @@ export default function HomeScreen({ navigation }: Props) {
           />
           <ModeCard
             title="Timed"
+            subtitle={progress.timedBest > 0 ? `Best: ${progress.timedBest}` : undefined}
             emoji="⏱️"
-            comingSoon
+            onPress={() => navigation.navigate('Timed')}
             background={colors.card}
             badgeColors={[colors.orangeLight, colors.orangeDeep]}
           />

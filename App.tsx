@@ -11,6 +11,8 @@ import Onboarding2Screen from './src/screens/Onboarding2Screen';
 import HomeScreen from './src/screens/HomeScreen';
 import LevelsScreen from './src/screens/LevelsScreen';
 import DailyScreen from './src/screens/DailyScreen';
+import TimedScreen from './src/screens/TimedScreen';
+import TimedResultScreen from './src/screens/TimedResultScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import StatisticsScreen from './src/screens/StatisticsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -56,6 +58,8 @@ export default function App() {
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Levels" component={LevelsScreen} />
             <Stack.Screen name="Daily" component={DailyScreen} />
+            <Stack.Screen name="Timed" component={TimedScreen} />
+            <Stack.Screen name="TimedResult" component={TimedResultScreen} options={{ animation: 'fade' }} />
             <Stack.Screen name="Leaderboard" component={LeaderboardScreen} options={{ animation: 'fade' }} />
             <Stack.Screen name="Statistics" component={StatisticsScreen} options={{ animation: 'fade' }} />
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ animation: 'fade' }} />

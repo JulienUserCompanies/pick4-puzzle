@@ -7,6 +7,8 @@ export interface ProgressState {
   starsByLevel: Record<number, number>;
   /** Highest level the player can enter. Starts at 1; unlocked by winning the level before it. */
   maxUnlockedLevel: number;
+  /** Most puzzles solved in a single 60-second Timed run, on this device. Device-local only — not synced to `progress` (that table is keyed by level/stars, not a single running best), the Timed leaderboard is the cross-device view. */
+  timedBest: number;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
 }
@@ -14,6 +16,7 @@ export interface ProgressState {
 export const DEFAULT_PROGRESS: ProgressState = {
   starsByLevel: {},
   maxUnlockedLevel: 1,
+  timedBest: 0,
   soundEnabled: true,
   hapticsEnabled: true,
 };

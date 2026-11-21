@@ -7,6 +7,8 @@ export type RootStackParamList = {
   Home: undefined;
   Levels: undefined;
   Daily: undefined;
+  Timed: undefined;
+  TimedResult: { solved: number; isNewBest: boolean };
   Leaderboard: undefined;
   Statistics: undefined;
   Profile: undefined;

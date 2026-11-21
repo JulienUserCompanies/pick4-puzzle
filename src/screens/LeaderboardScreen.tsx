@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { BottomNav, NavTab } from '../components/BottomNav';
 import { useAuth } from '../storage/AuthContext';
-import { DailyLeaderboardRow, fetchTodayLeaderboard } from '../lib/daily';
+import { fetchTodayLeaderboard } from '../lib/daily';
+import { fetchTodayTimedLeaderboard } from '../lib/timed';
 import { colors, radii, shadows, topHighlight } from '../theme';
+
+type Tab = 'daily' | 'timed';
+
+/** Both leaderboard sources normalized to one shape, so the row UI below doesn't care which tab it's rendering. */
+interface Row {
+  userId: string;
+  displayName: string | null;
+  scoreText: string;
+}
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Leaderboard'>;
 
@@ -44,12 +54,32 @@ function RankBadge({ index }: { index: number }) {
 
 export default function LeaderboardScreen({ navigation }: Props) {
   const { user } = useAuth();
-  const [rows, setRows] = useState<DailyLeaderboardRow[]>([]);
+  const [tab, setTab] = useState<Tab>('daily');
+  const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetchTodayLeaderboard().then((data) => {
+    setLoading(true);
+
+    const load =
+      tab === 'daily'
+        ? fetchTodayLeaderboard().then((data) =>
+            data.map((row): Row => ({
+              userId: row.userId,
+              displayName: row.displayName,
+              scoreText: formatTime(row.timeMs),
+            }))
+          )
+        : fetchTodayTimedLeaderboard().then((data) =>
+            data.map((row): Row => ({
+              userId: row.userId,
+              displayName: row.displayName,
+              scoreText: `${row.puzzlesSolved} solved`,
+            }))
+          );
+
+    load.then((data) => {
       if (!cancelled) {
         setRows(data);
         setLoading(false);
@@ -58,7 +88,7 @@ export default function LeaderboardScreen({ navigation }: Props) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [tab]);
 
   function onNavigate(tab: NavTab) {
     navigation.navigate(tab);
@@ -68,7 +98,24 @@ export default function LeaderboardScreen({ navigation }: Props) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Today's Leaderboard</Text>
-        <Text style={styles.subtitle}>Fastest Daily Challenge solves, today only</Text>
+        <Text style={styles.subtitle}>
+          {tab === 'daily' ? 'Fastest Daily Challenge solves, today only' : 'Most puzzles solved in a 60s sprint, today only'}
+        </Text>
+      </View>
+
+      <View style={styles.tabRow}>
+        <Pressable
+          style={[styles.tabButton, tab === 'daily' && styles.tabButtonActive]}
+          onPress={() => setTab('daily')}
+        >
+          <Text style={[styles.tabText, tab === 'daily' && styles.tabTextActive]}>Daily</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tabButton, tab === 'timed' && styles.tabButtonActive]}
+          onPress={() => setTab('timed')}
+        >
+          <Text style={[styles.tabText, tab === 'timed' && styles.tabTextActive]}>Timed</Text>
+        </Pressable>
       </View>
 
       <View style={styles.listArea}>
@@ -77,9 +124,13 @@ export default function LeaderboardScreen({ navigation }: Props) {
         ) : rows.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyText}>
-              {user
-                ? "No one's finished today's Daily Challenge yet — be the first!"
-                : "No results yet today. Sign in and play the Daily Challenge to appear here."}
+              {tab === 'daily'
+                ? user
+                  ? "No one's finished today's Daily Challenge yet — be the first!"
+                  : 'No results yet today. Sign in and play the Daily Challenge to appear here.'
+                : user
+                ? "No Timed runs yet today — be the first!"
+                : 'No results yet today. Sign in and play Timed mode to appear here.'}
             </Text>
           </View>
         ) : (
@@ -96,7 +147,7 @@ export default function LeaderboardScreen({ navigation }: Props) {
                     {row.displayName ?? 'A player'}
                     {isMe ? ' (You)' : ''}
                   </Text>
-                  <Text style={styles.time}>{formatTime(row.timeMs)}</Text>
+                  <Text style={styles.time}>{row.scoreText}</Text>
                 </View>
               </View>
             );
@@ -130,6 +181,33 @@ const styles = StyleSheet.create({
     color: colors.inkFaint,
     fontSize: 13,
     marginTop: 2,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.cardAlt,
+    borderRadius: radii.pill,
+    marginHorizontal: 20,
+    marginBottom: 14,
+    padding: 4,
+    gap: 4,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 9,
+    borderRadius: radii.pill,
+  },
+  tabButtonActive: {
+    backgroundColor: colors.card,
+    ...shadows.soft,
+  },
+  tabText: {
+    color: colors.inkFaint,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  tabTextActive: {
+    color: colors.orange,
   },
   listArea: {
     flex: 1,
