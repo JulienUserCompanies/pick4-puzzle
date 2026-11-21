@@ -59,19 +59,29 @@ export function NumberTile({ value, selected, onPress, disabled }: Props) {
       onPress={onPress}
       style={styles.wrap}
     >
-      <Animated.View style={[styles.ledge, { backgroundColor: shadowColor }, animatedStyle]}>
-        <LinearGradient
-          colors={selected ? GREEN : BLUE}
-          style={[styles.tile, disabled && !selected && styles.tileDisabled]}
-        >
-          <LinearGradient colors={topHighlight} style={styles.sheen} pointerEvents="none" />
-          <Text style={styles.value}>{value}</Text>
-          {selected && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeMark}>✓</Text>
-            </View>
-          )}
-        </LinearGradient>
+      {/* Soft ambient shadow the whole chunky block casts on the background,
+          separate from the bottom "ledge" extrusion below. */}
+      <Animated.View
+        style={[styles.ambientShadow, { shadowColor }, animatedStyle]}
+      >
+        <View style={[styles.ledge, { backgroundColor: shadowColor }]}>
+          <LinearGradient
+            colors={selected ? GREEN : BLUE}
+            style={[
+              styles.tile,
+              selected && styles.tileSelected,
+              disabled && !selected && styles.tileDisabled,
+            ]}
+          >
+            <LinearGradient colors={topHighlight} style={styles.sheen} pointerEvents="none" />
+            <Text style={styles.value}>{value}</Text>
+            {selected && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeMark}>✓</Text>
+              </View>
+            )}
+          </LinearGradient>
+        </View>
       </Animated.View>
     </Pressable>
   );
@@ -83,10 +93,18 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     margin: '1.65%',
   },
+  ambientShadow: {
+    flex: 1,
+    borderRadius: radii.lg,
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 6,
+  },
   ledge: {
     flex: 1,
     borderRadius: radii.lg,
-    paddingBottom: 5,
+    paddingBottom: 6,
   },
   tile: {
     flex: 1,
@@ -94,6 +112,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  tileSelected: {
+    borderWidth: 2,
+    borderColor: '#3ED66B',
   },
   sheen: {
     position: 'absolute',
@@ -109,6 +131,9 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '800',
     color: colors.white,
+    textShadowColor: 'rgba(0,0,0,0.15)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
   badge: {
     position: 'absolute',

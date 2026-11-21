@@ -59,7 +59,7 @@ export function GradientButton({ label, onPress, disabled, style, glow = true }:
       style={style}
     >
       <AnimatedGradient
-        colors={disabled ? ['#E4D9C8', '#D9CBB5'] : [colors.orangeLight, colors.orangeDeep]}
+        colors={disabled ? ['#F5D9C4', '#EAC2A4'] : [colors.orangeLight, colors.orangeDeep]}
         style={[styles.button, animatedStyle]}
       >
         <LinearGradient colors={topHighlight} style={styles.sheen} pointerEvents="none" />

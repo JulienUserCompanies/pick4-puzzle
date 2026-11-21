@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { generatePuzzle } from '../engine/generator';
@@ -13,7 +14,7 @@ import { useProgress } from '../storage/ProgressContext';
 import { useAuth } from '../storage/AuthContext';
 import { useFeedback } from '../audio/useFeedback';
 import { submitDailyResult } from '../lib/daily';
-import { colors, radii, shadows } from '../theme';
+import { colors, radii, shadows, topHighlight } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
@@ -113,12 +114,23 @@ export default function GameScreen({ route, navigation }: Props) {
       </View>
 
       <View style={styles.targetArea}>
-        <Text style={styles.targetLabel}>Make</Text>
-        <Text style={styles.target}>{puzzle.target}</Text>
-        <View style={styles.totalPill}>
-          <Text style={[styles.totalText, { color: totalColor }]}>
-            {runningTotal} / {puzzle.target}
-          </Text>
+        {/* Very subtle warm glow behind the panel, instead of a flat background. */}
+        <View style={styles.targetGlow} pointerEvents="none" />
+
+        <View style={styles.targetCardLedge}>
+          <View style={styles.targetCard}>
+            <LinearGradient colors={topHighlight} style={styles.targetCardSheen} pointerEvents="none" />
+            <Text style={styles.targetLabel}>Make</Text>
+            <Text style={styles.target}>{puzzle.target}</Text>
+          </View>
+        </View>
+
+        <View style={styles.totalPillLedge}>
+          <View style={styles.totalPill}>
+            <Text style={[styles.totalText, { color: totalColor }]}>
+              {runningTotal} / {puzzle.target}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -137,7 +149,12 @@ export default function GameScreen({ route, navigation }: Props) {
       {feedback === 'none' ? (
         <View style={styles.actionsRow}>
           <Pressable style={styles.resetButton} onPress={resetSelection}>
-            <Text style={styles.resetIcon}>↺</Text>
+            <View style={styles.resetLedge}>
+              <View style={styles.resetCircle}>
+                <LinearGradient colors={topHighlight} style={styles.resetSheen} pointerEvents="none" />
+                <Text style={styles.resetGlyph}>↺</Text>
+              </View>
+            </View>
             <Text style={styles.resetLabel}>Reset</Text>
           </Pressable>
           <View style={{ flex: 1 }}>
@@ -206,6 +223,44 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     gap: 16,
   },
+  targetGlow: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 260,
+    height: 170,
+    marginLeft: -130,
+    marginTop: -85,
+    borderRadius: 999,
+    backgroundColor: colors.orangeLight,
+    opacity: 0.14,
+  },
+  targetCardLedge: {
+    borderRadius: radii.xl,
+    backgroundColor: '#E8D3B0',
+    paddingBottom: 6,
+    shadowColor: 'rgba(74,59,46,1)',
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  targetCard: {
+    backgroundColor: colors.card,
+    borderRadius: radii.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 20,
+    overflow: 'hidden',
+  },
+  targetCardSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '45%',
+  },
   targetLabel: {
     color: colors.inkMuted,
     fontSize: 11,
@@ -218,12 +273,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: -4,
   },
+  totalPillLedge: {
+    borderRadius: radii.pill,
+    backgroundColor: '#E8D3B0',
+    paddingBottom: 3,
+    ...shadows.soft,
+  },
   totalPill: {
     backgroundColor: colors.card,
     borderRadius: radii.pill,
     paddingHorizontal: 18,
     paddingVertical: 8,
-    ...shadows.soft,
   },
   totalText: {
     fontSize: 15,
@@ -243,16 +303,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  resetIcon: {
+  resetLedge: {
     width: 46,
     height: 46,
     borderRadius: 23,
+    backgroundColor: '#E8D3B0',
+    paddingBottom: 3,
+    shadowColor: 'rgba(74,59,46,1)',
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  resetCircle: {
+    flex: 1,
+    borderRadius: 23,
     backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  resetSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  resetGlyph: {
     color: colors.orange,
     fontSize: 18,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    overflow: 'hidden',
   },
   resetLabel: {
     color: colors.orange,
