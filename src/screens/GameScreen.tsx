@@ -1,8 +1,9 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { generatePuzzle } from '../engine/generator';
+import { tierForLevel } from '../engine/difficulty';
 import { Puzzle } from '../engine/types';
 import { NumberTile } from '../components/NumberTile';
 import { GradientButton } from '../components/GradientButton';
@@ -19,6 +20,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
 type Feedback = 'none' | 'win' | 'lose' | 'dailyWin';
 
+const TIER_LABEL: Record<string, string> = {
+  easy: 'Beginner',
+  mid: 'Intermediate',
+  hard: 'Expert',
+};
+
 /** 3 stars for a clean solve, 2 for one wrong submit, 1 for two or more. */
 function starsForAttempts(wrongAttempts: number): number {
   if (wrongAttempts === 0) return 3;
@@ -26,9 +33,39 @@ function starsForAttempts(wrongAttempts: number): number {
   return 1;
 }
 
+/** How many levels in a row, ending just before `uptoLevel`, were solved with a clean 3-star run. */
+function perfectStreak(starsByLevel: Record<number, number>, uptoLevel: number): number {
+  let streak = 0;
+  let lvl = uptoLevel;
+  while (starsByLevel[lvl] === 3) {
+    streak += 1;
+    lvl -= 1;
+  }
+  return streak;
+}
+
+function formatTime(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const mm = Math.floor(totalSeconds / 60);
+  const ss = totalSeconds % 60;
+  return `${mm}:${ss.toString().padStart(2, '0')}`;
+}
+
+function StatCard({ label, value, icon }: { label: string; value: string; icon?: string }) {
+  return (
+    <View style={styles.statCard}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>
+        {icon ? `${icon} ` : ''}
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 export default function GameScreen({ route, navigation }: Props) {
   const { level, daily, dailyPuzzle } = route.params;
-  const { recordWin } = useProgress();
+  const { progress, recordWin } = useProgress();
   const { user } = useAuth();
   const sfx = useFeedback();
 
@@ -36,7 +73,16 @@ export default function GameScreen({ route, navigation }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [feedback, setFeedback] = useState<Feedback>('none');
   const [wrongAttempts, setWrongAttempts] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const startedAt = useRef(Date.now());
+
+  // Live-ticking timer for the header stat card; stops once the level is won
+  // (it keeps running through a wrong-answer retry, same as the real clock would).
+  useEffect(() => {
+    if (feedback === 'win' || feedback === 'dailyWin') return;
+    const id = setInterval(() => setElapsedMs(Date.now() - startedAt.current), 1000);
+    return () => clearInterval(id);
+  }, [feedback]);
 
   const runningTotal = useMemo(
     () => [...selected].reduce((sum, i) => sum + puzzle.grid[i], 0),
@@ -44,6 +90,8 @@ export default function GameScreen({ route, navigation }: Props) {
   );
 
   const locked = feedback !== 'none';
+  const streak = perfectStreak(progress.starsByLevel, (daily ? progress.maxUnlockedLevel : level) - 1);
+  const tierLabel = TIER_LABEL[tierForLevel(level || 1)];
 
   function toggleTile(index: number) {
     if (locked) return;
@@ -93,33 +141,54 @@ export default function GameScreen({ route, navigation }: Props) {
     setSelected(new Set());
   }
 
-  const totalColor =
-    runningTotal === puzzle.target
-      ? colors.success
-      : runningTotal > puzzle.target
-      ? colors.error
-      : colors.inkFaint;
+  const exceeded = runningTotal > puzzle.target;
+  const totalColor = runningTotal === puzzle.target ? colors.success : exceeded ? colors.orange : colors.inkFaint;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.navigate('Home')} accessibilityLabel="Back">
+      <View style={styles.topRow}>
+        <Pressable onPress={() => navigation.navigate('Home')} accessibilityLabel="Back" hitSlop={8}>
           <Text style={styles.backArrow}>←</Text>
         </Pressable>
-        <Text style={styles.levelLabel}>{daily ? 'Daily Challenge' : `Level ${level}`}</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.eyebrow}>
+          {daily ? 'DAILY CHALLENGE' : `${tierLabel.toUpperCase()} · LEVEL ${level}`}
+        </Text>
+        <View style={{ width: 22 }} />
       </View>
 
-      <View style={styles.targetArea}>
-        <Text style={styles.targetLabel}>Make</Text>
-        <Text style={styles.target}>{puzzle.target}</Text>
-        <View style={styles.totalPill}>
-          <Text style={[styles.totalText, { color: totalColor }]}>
-            {runningTotal} / {puzzle.target}
-          </Text>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Pick 4</Text>
+          <Text style={styles.subtitle}>Build the number with 4 numbers</Text>
         </View>
+        <View style={styles.headerIcon}>
+          <Mascot pose="idle" size={34} />
+        </View>
+      </View>
+
+      <View style={styles.statsRow}>
+        <StatCard label="Level" value={daily ? 'Daily' : String(level)} />
+        <StatCard label="Time" value={formatTime(elapsedMs)} />
+        <StatCard label="Streak" value={String(streak)} icon="⭐" />
+      </View>
+
+      <View style={styles.targetCard}>
+        <Text style={styles.targetLabel}>MAKE</Text>
+        <Text style={styles.target}>{puzzle.target}</Text>
+      </View>
+
+      <View style={styles.totalPill}>
+        <Text style={[styles.totalText, { color: totalColor }]}>
+          {runningTotal} / {puzzle.target}
+        </Text>
+      </View>
+
+      <View style={styles.dotsRow}>
+        {Array.from({ length: puzzle.pickCount }).map((_, i) => (
+          <View key={i} style={[styles.dot, i < selected.size && styles.dotFilled]} />
+        ))}
       </View>
 
       <View style={styles.grid}>
@@ -151,14 +220,14 @@ export default function GameScreen({ route, navigation }: Props) {
         </View>
       ) : feedback === 'lose' ? (
         <View style={styles.loseArea}>
-          <Mascot pose="confused" size={64} popIn />
+          <Mascot pose="confused" size={56} popIn />
           <Text style={styles.loseText}>Not quite — try again!</Text>
           <GradientButton label="Try again" onPress={tryAgain} style={{ width: '100%' }} />
         </View>
       ) : feedback === 'dailyWin' ? (
         <View style={styles.dailyWinArea}>
           <Confetti />
-          <Mascot pose="celebrating" size={84} popIn />
+          <Mascot pose="celebrating" size={72} popIn />
           <Text style={styles.dailyWinTitle}>Daily Challenge complete!</Text>
           <Text style={styles.dailyWinSub}>
             {user ? "You're on today's leaderboard." : 'Sign in to join the leaderboard next time.'}
@@ -178,61 +247,131 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
-    paddingTop: 12,
+    paddingTop: 10,
     paddingHorizontal: 20,
-    paddingBottom: 28,
+    paddingBottom: 20,
   },
-  header: {
-    width: '100%',
+  topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
   backArrow: {
     color: colors.ink,
-    fontSize: 22,
+    fontSize: 20,
   },
-  levelLabel: {
+  eyebrow: {
     color: colors.inkFaint,
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
-  targetArea: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  title: {
+    color: colors.ink,
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  subtitle: {
+    color: colors.inkFaint,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.md,
+    backgroundColor: colors.cardAlt,
     alignItems: 'center',
     justifyContent: 'center',
-    flexGrow: 1,
-    gap: 16,
+    ...shadows.soft,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: radii.md,
+    paddingVertical: 8,
+    alignItems: 'center',
+    ...shadows.soft,
+  },
+  statLabel: {
+    color: colors.inkMuted,
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  statValue: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  targetCard: {
+    backgroundColor: colors.card,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+    paddingVertical: 14,
+    marginBottom: 10,
+    ...shadows.card,
   },
   targetLabel: {
     color: colors.inkMuted,
     fontSize: 11,
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
   target: {
     color: colors.ink,
-    fontSize: 48,
+    fontSize: 38,
     fontWeight: '800',
-    marginTop: -4,
+    marginTop: 2,
   },
   totalPill: {
+    alignSelf: 'center',
     backgroundColor: colors.card,
     borderRadius: radii.pill,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginBottom: 8,
     ...shadows.soft,
   },
   totalText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    gap: 6,
+    marginBottom: 14,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+  },
+  dotFilled: {
+    backgroundColor: colors.success,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -244,15 +383,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   resetIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.card,
     color: colors.orange,
-    fontSize: 18,
+    fontSize: 17,
     textAlign: 'center',
     textAlignVertical: 'center',
     overflow: 'hidden',
+    ...shadows.soft,
   },
   resetLabel: {
     color: colors.orange,
