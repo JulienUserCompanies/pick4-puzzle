@@ -1,17 +1,23 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { generatePuzzle } from '../engine/generator';
 import { Puzzle } from '../engine/types';
 import { NumberTile } from '../components/NumberTile';
+import { GradientButton } from '../components/GradientButton';
+import { Mascot } from '../components/Mascot';
+import { Confetti } from '../components/Confetti';
 import { RootStackParamList } from '../navigation/types';
 import { useProgress } from '../storage/ProgressContext';
+import { useAuth } from '../storage/AuthContext';
 import { useFeedback } from '../audio/useFeedback';
+import { submitDailyResult } from '../lib/daily';
+import { colors, radii, shadows } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
-type Feedback = 'none' | 'win' | 'lose';
+type Feedback = 'none' | 'win' | 'lose' | 'dailyWin';
 
 /** 3 stars for a clean solve, 2 for one wrong submit, 1 for two or more. */
 function starsForAttempts(wrongAttempts: number): number {
@@ -21,14 +27,16 @@ function starsForAttempts(wrongAttempts: number): number {
 }
 
 export default function GameScreen({ route, navigation }: Props) {
-  const { level } = route.params;
+  const { level, daily, dailyPuzzle } = route.params;
   const { recordWin } = useProgress();
+  const { user } = useAuth();
   const sfx = useFeedback();
 
-  const [puzzle, setPuzzle] = useState<Puzzle>(() => generatePuzzle(level));
+  const [puzzle, setPuzzle] = useState<Puzzle>(() => dailyPuzzle ?? generatePuzzle(level));
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [feedback, setFeedback] = useState<Feedback>('none');
   const [wrongAttempts, setWrongAttempts] = useState(0);
+  const startedAt = useRef(Date.now());
 
   const runningTotal = useMemo(
     () => [...selected].reduce((sum, i) => sum + puzzle.grid[i], 0),
@@ -55,11 +63,19 @@ export default function GameScreen({ route, navigation }: Props) {
     if (selected.size !== puzzle.pickCount || locked) return;
     const won = runningTotal === puzzle.target;
     if (won) {
-      const stars = starsForAttempts(wrongAttempts);
       sfx.correct();
-      recordWin(level, stars);
-      setFeedback('win');
-      navigation.navigate('Win', { level, stars });
+      if (daily) {
+        setFeedback('dailyWin');
+        if (user) {
+          const timeMs = Date.now() - startedAt.current;
+          submitDailyResult(user.id, timeMs, wrongAttempts + 1);
+        }
+      } else {
+        const stars = starsForAttempts(wrongAttempts);
+        recordWin(level, stars);
+        setFeedback('win');
+        navigation.navigate('Win', { level, stars });
+      }
     } else {
       sfx.wrong();
       setWrongAttempts((n) => n + 1);
@@ -79,29 +95,32 @@ export default function GameScreen({ route, navigation }: Props) {
 
   const totalColor =
     runningTotal === puzzle.target
-      ? '#c6ff3d'
+      ? colors.success
       : runningTotal > puzzle.target
-      ? '#ff9d42'
-      : '#6b6f67';
+      ? colors.error
+      : colors.inkFaint;
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.navigate('Home')} accessibilityLabel="Back to levels">
+        <Pressable onPress={() => navigation.navigate('Home')} accessibilityLabel="Back">
           <Text style={styles.backArrow}>←</Text>
         </Pressable>
-        <Text style={styles.levelLabel}>Level {level}</Text>
+        <Text style={styles.levelLabel}>{daily ? 'Daily Challenge' : `Level ${level}`}</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <Text style={styles.targetLabel}>Make</Text>
-      <Text style={styles.target}>{puzzle.target}</Text>
-
-      <Text style={[styles.runningTotal, { color: totalColor }]}>
-        {runningTotal} / {puzzle.target}
-      </Text>
+      <View style={styles.targetArea}>
+        <Text style={styles.targetLabel}>Make</Text>
+        <Text style={styles.target}>{puzzle.target}</Text>
+        <View style={styles.totalPill}>
+          <Text style={[styles.totalText, { color: totalColor }]}>
+            {runningTotal} / {puzzle.target}
+          </Text>
+        </View>
+      </View>
 
       <View style={styles.grid}>
         {puzzle.grid.map((value, index) => (
@@ -116,26 +135,39 @@ export default function GameScreen({ route, navigation }: Props) {
       </View>
 
       {feedback === 'none' ? (
-        <View style={styles.actions}>
-          <Pressable style={styles.secondaryButton} onPress={resetSelection}>
-            <Text style={styles.secondaryButtonText}>Reset</Text>
+        <View style={styles.actionsRow}>
+          <Pressable style={styles.resetButton} onPress={resetSelection}>
+            <Text style={styles.resetIcon}>↺</Text>
+            <Text style={styles.resetLabel}>Reset</Text>
           </Pressable>
-          <Pressable
-            style={[styles.primaryButton, selected.size !== puzzle.pickCount && styles.buttonDisabled]}
-            onPress={submit}
-            disabled={selected.size !== puzzle.pickCount}
-          >
-            <Text style={styles.primaryButtonText}>
-              Submit ({selected.size}/{puzzle.pickCount})
-            </Text>
-          </Pressable>
+          <View style={{ flex: 1 }}>
+            <GradientButton
+              label={`Submit (${selected.size}/${puzzle.pickCount})`}
+              onPress={submit}
+              disabled={selected.size !== puzzle.pickCount}
+              glow={selected.size === puzzle.pickCount}
+            />
+          </View>
         </View>
       ) : feedback === 'lose' ? (
-        <View style={styles.actions}>
-          <Text style={[styles.feedbackText, styles.lose]}>Not quite — that's not the target.</Text>
-          <Pressable style={styles.primaryButton} onPress={tryAgain}>
-            <Text style={styles.primaryButtonText}>Try again</Text>
-          </Pressable>
+        <View style={styles.loseArea}>
+          <Mascot pose="confused" size={64} popIn />
+          <Text style={styles.loseText}>Not quite — try again!</Text>
+          <GradientButton label="Try again" onPress={tryAgain} style={{ width: '100%' }} />
+        </View>
+      ) : feedback === 'dailyWin' ? (
+        <View style={styles.dailyWinArea}>
+          <Confetti />
+          <Mascot pose="celebrating" size={84} popIn />
+          <Text style={styles.dailyWinTitle}>Daily Challenge complete!</Text>
+          <Text style={styles.dailyWinSub}>
+            {user ? "You're on today's leaderboard." : 'Sign in to join the leaderboard next time.'}
+          </Text>
+          <GradientButton
+            label="Back to Home"
+            onPress={() => navigation.navigate('Home')}
+            style={{ width: '100%' }}
+          />
         </View>
       ) : null}
     </SafeAreaView>
@@ -145,85 +177,112 @@ export default function GameScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
-    alignItems: 'center',
+    backgroundColor: colors.bg,
     paddingTop: 12,
     paddingHorizontal: 20,
+    paddingBottom: 28,
   },
   header: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   backArrow: {
-    color: '#f2f2ed',
+    color: colors.ink,
     fontSize: 22,
   },
   levelLabel: {
-    color: '#6b6f67',
-    fontSize: 16,
-    fontWeight: '600',
+    color: colors.inkFaint,
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  targetArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
+    gap: 16,
   },
   targetLabel: {
-    color: '#6b6f67',
-    fontSize: 16,
-    marginTop: 12,
+    color: colors.inkMuted,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
   target: {
-    color: '#f2f2ed',
-    fontSize: 56,
+    color: colors.ink,
+    fontSize: 48,
     fontWeight: '800',
-    marginBottom: 8,
+    marginTop: -4,
   },
-  runningTotal: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 24,
+  totalPill: {
+    backgroundColor: colors.card,
+    borderRadius: radii.pill,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    ...shadows.soft,
+  },
+  totalText: {
+    fontSize: 15,
+    fontWeight: '800',
   },
   grid: {
-    width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    marginBottom: 20,
   },
-  actions: {
-    width: '100%',
-    marginTop: 32,
+  actionsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
-  primaryButton: {
-    backgroundColor: '#c6ff3d',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 14,
-    width: '100%',
+  resetButton: {
     alignItems: 'center',
+    gap: 4,
   },
-  buttonDisabled: {
-    opacity: 0.4,
-  },
-  primaryButtonText: {
-    color: '#0a0a0a',
+  resetIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.card,
+    color: colors.orange,
     fontSize: 18,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    overflow: 'hidden',
+  },
+  resetLabel: {
+    color: colors.orange,
+    fontSize: 11,
     fontWeight: '700',
   },
-  secondaryButton: {
-    paddingVertical: 10,
+  loseArea: {
+    alignItems: 'center',
+    gap: 10,
   },
-  secondaryButtonText: {
-    color: '#6b6f67',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  feedbackText: {
-    fontSize: 18,
+  loseText: {
+    color: colors.error,
+    fontSize: 15,
     fontWeight: '700',
+    marginBottom: 2,
+  },
+  dailyWinArea: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  dailyWinTitle: {
+    color: colors.ink,
+    fontSize: 17,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  dailyWinSub: {
+    color: colors.inkFaint,
+    fontSize: 13,
+    textAlign: 'center',
     marginBottom: 4,
-  },
-  lose: {
-    color: '#ff9d42',
   },
 });
