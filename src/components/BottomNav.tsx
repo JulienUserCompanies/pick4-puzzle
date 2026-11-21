@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, shadows } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, radii, shadows, topHighlight } from '../theme';
 
 export type NavTab = 'Home' | 'Leaderboard' | 'Statistics' | 'Profile';
 
@@ -30,6 +31,9 @@ export function BottomNav({ active, onNavigate }: Props) {
             accessibilityLabel={tab.label}
           >
             <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
+              {isActive && (
+                <LinearGradient colors={topHighlight} style={styles.iconSheen} pointerEvents="none" />
+              )}
               <Text style={[styles.icon, isActive && styles.iconActive]}>{tab.icon}</Text>
             </View>
           </Pressable>
@@ -60,9 +64,18 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   iconWrapActive: {
     backgroundColor: '#FFE6C2',
+    ...shadows.soft,
+  },
+  iconSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
   },
   icon: {
     fontSize: 18,

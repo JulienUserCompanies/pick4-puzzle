@@ -79,7 +79,39 @@ export const shadows = {
     shadowOffset: { width: 0, height: 3 },
     elevation: 1,
   },
+  // Slightly deeper + wider than `soft` — for surfaces we want to read as
+  // physically raised off the background (mode cards, banners), not just
+  // lightly separated from it.
+  raised: {
+    shadowColor: 'rgba(74,59,46,1)',
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 5,
+  },
+  glowOrange: {
+    shadowColor: colors.orange,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  glowPurple: {
+    shadowColor: colors.purpleDeep,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
 };
+
+/**
+ * A thin, semi-transparent white-to-nothing gradient, meant to sit as an
+ * absolutely-positioned overlay across the top ~45% of a raised surface
+ * (button, card, tile). This is the "soft highlight on the upper edge"
+ * that reads as a light source from above, without needing new art.
+ */
+export const topHighlight: [string, string] = ['rgba(255,255,255,0.35)', 'rgba(255,255,255,0)'];
 
 export const fontWeights = {
   regular: '400' as const,

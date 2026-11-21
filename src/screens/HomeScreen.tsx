@@ -6,7 +6,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useProgress } from '../storage/ProgressContext';
 import { Mascot } from '../components/Mascot';
 import { BottomNav, NavTab } from '../components/BottomNav';
-import { colors, radii, shadows } from '../theme';
+import { colors, radii, shadows, topHighlight } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -52,22 +52,34 @@ export default function HomeScreen({ navigation }: Props) {
           </Pressable>
         </View>
 
-        <Pressable onPress={() => navigation.navigate('Daily')}>
+        <Pressable onPress={() => navigation.navigate('Daily')} style={styles.dailyGlowWrap}>
           <LinearGradient
-            colors={[colors.purple, colors.purpleLight]}
+            colors={[colors.purple, colors.purpleDeep]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.dailyBanner}
           >
-            <View style={styles.dailyIconWrap}>
-              <Text style={styles.dailyIcon}>📅</Text>
+            {/* Soft highlight across the top edge, like light hitting a raised surface. */}
+            <LinearGradient colors={topHighlight} style={styles.dailyBannerSheen} pointerEvents="none" />
+
+            <View style={styles.dailyIconLedge}>
+              <View style={styles.dailyIconWrap}>
+                <LinearGradient colors={topHighlight} style={styles.dailyIconSheen} pointerEvents="none" />
+                <Text style={styles.dailyIcon}>📅</Text>
+              </View>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.dailyTitle}>Daily Challenge</Text>
               <Text style={styles.dailySubtitle}>Play today's puzzle and keep your streak</Text>
             </View>
-            <View style={styles.dailyPlay}>
-              <Text style={styles.dailyPlayGlyph}>▶</Text>
+            <View style={styles.dailyPlayLedge}>
+              <LinearGradient
+                colors={[colors.orangeLight, colors.orangeDeep]}
+                style={styles.dailyPlay}
+              >
+                <LinearGradient colors={topHighlight} style={styles.dailyPlaySheen} pointerEvents="none" />
+                <Text style={styles.dailyPlayGlyph}>▶</Text>
+              </LinearGradient>
             </View>
           </LinearGradient>
         </Pressable>
@@ -78,15 +90,29 @@ export default function HomeScreen({ navigation }: Props) {
             emoji="🔢"
             onPress={() => navigation.navigate('Levels')}
             background={colors.cardAlt}
+            badgeColors={[colors.blueGradTop, colors.purpleDeep]}
           />
-          <ModeCard title="Timed" emoji="⏱️" comingSoon background={colors.card} />
+          <ModeCard
+            title="Timed"
+            emoji="⏱️"
+            comingSoon
+            background={colors.card}
+            badgeColors={[colors.orangeLight, colors.orangeDeep]}
+          />
           <ModeCard
             title="Daily"
             emoji="📅"
             onPress={() => navigation.navigate('Daily')}
             background={colors.cardAlt}
+            badgeColors={[colors.purpleLight, colors.purpleDeep]}
           />
-          <ModeCard title="Weekly" emoji="🏅" comingSoon background={colors.card} />
+          <ModeCard
+            title="Weekly"
+            emoji="🏅"
+            comingSoon
+            background={colors.card}
+            badgeColors={[colors.goldLight, colors.gold]}
+          />
         </View>
       </ScrollView>
 
@@ -103,12 +129,14 @@ function ModeCard({
   onPress,
   background,
   comingSoon,
+  badgeColors,
 }: {
   title: string;
   emoji: string;
   onPress?: () => void;
   background: string;
   comingSoon?: boolean;
+  badgeColors: [string, string];
 }) {
   return (
     <Pressable
@@ -116,7 +144,15 @@ function ModeCard({
       disabled={!onPress}
       style={[styles.modeCard, { backgroundColor: background }, comingSoon && styles.modeCardDisabled]}
     >
-      <Text style={styles.modeEmoji}>{emoji}</Text>
+      {/* Subtle sheen across the top of the card, like the daily banner. */}
+      <LinearGradient colors={topHighlight} style={styles.modeCardSheen} pointerEvents="none" />
+
+      <View style={styles.modeIconLedge}>
+        <LinearGradient colors={badgeColors} style={styles.modeIconBadge}>
+          <LinearGradient colors={topHighlight} style={styles.modeIconSheen} pointerEvents="none" />
+          <Text style={styles.modeEmoji}>{emoji}</Text>
+        </LinearGradient>
+      </View>
       <Text style={styles.modeTitle}>{title}</Text>
       {comingSoon && (
         <View style={styles.comingSoonBadge}>
@@ -207,18 +243,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.orange,
   },
+  dailyGlowWrap: {
+    marginBottom: 20,
+    ...shadows.glowPurple,
+  },
   dailyBanner: {
     borderRadius: radii.lg,
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 20,
-    shadowColor: colors.purpleDeep,
-    shadowOpacity: 0.32,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    overflow: 'hidden',
+    borderBottomWidth: 3,
+    borderBottomColor: 'rgba(0,0,0,0.12)',
+  },
+  dailyBannerSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '55%',
+    borderTopLeftRadius: radii.lg,
+    borderTopRightRadius: radii.lg,
+  },
+  dailyIconLedge: {
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    paddingBottom: 3,
   },
   dailyIconWrap: {
     width: 40,
@@ -227,6 +278,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  dailyIconSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
   },
   dailyIcon: {
     fontSize: 20,
@@ -241,13 +300,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  dailyPlayLedge: {
+    borderRadius: 18,
+    backgroundColor: colors.orangeDeep,
+    paddingBottom: 3,
+  },
   dailyPlay: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.orange,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  dailyPlaySheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
   },
   dailyPlayGlyph: {
     color: colors.white,
@@ -265,13 +336,43 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     padding: 18,
     justifyContent: 'flex-end',
+    overflow: 'hidden',
+    ...shadows.raised,
+  },
+  modeCardSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
   },
   modeCardDisabled: {
     opacity: 0.6,
   },
-  modeEmoji: {
-    fontSize: 30,
+  modeIconLedge: {
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    paddingBottom: 3,
     marginBottom: 12,
+  },
+  modeIconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  modeIconSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  modeEmoji: {
+    fontSize: 22,
   },
   modeTitle: {
     color: colors.ink,

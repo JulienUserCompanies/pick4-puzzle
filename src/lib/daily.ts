@@ -13,6 +13,7 @@ export interface DailyLeaderboardRow {
   timeMs: number;
   taps: number;
   displayName: string | null;
+  userId: string;
 }
 
 function todayDateString(): string {
@@ -100,5 +101,6 @@ export async function fetchTodayLeaderboard(limit = 20): Promise<DailyLeaderboar
     timeMs: row.time_ms,
     taps: row.taps,
     displayName: nameById.get(row.user_id) ?? null,
+    userId: row.user_id,
   }));
 }

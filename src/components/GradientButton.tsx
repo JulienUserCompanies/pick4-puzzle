@@ -10,7 +10,7 @@ import Animated, {
   withSpring,
   Easing,
 } from 'react-native-reanimated';
-import { colors, radii } from '../theme';
+import { colors, radii, topHighlight } from '../theme';
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -62,6 +62,7 @@ export function GradientButton({ label, onPress, disabled, style, glow = true }:
         colors={disabled ? ['#E4D9C8', '#D9CBB5'] : [colors.orangeLight, colors.orangeDeep]}
         style={[styles.button, animatedStyle]}
       >
+        <LinearGradient colors={topHighlight} style={styles.sheen} pointerEvents="none" />
         <Text style={[styles.label, disabled && styles.labelDisabled]}>{label}</Text>
       </AnimatedGradient>
     </Pressable>
@@ -75,9 +76,19 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    borderBottomWidth: 3,
+    borderBottomColor: 'rgba(0,0,0,0.15)',
     shadowColor: colors.orangeShadow,
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
+  },
+  sheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '55%',
   },
   label: {
     color: colors.white,

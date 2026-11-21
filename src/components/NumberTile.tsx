@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, radii } from '../theme';
+import { colors, radii, topHighlight } from '../theme';
 
 interface Props {
   value: number;
@@ -64,6 +64,7 @@ export function NumberTile({ value, selected, onPress, disabled }: Props) {
           colors={selected ? GREEN : BLUE}
           style={[styles.tile, disabled && !selected && styles.tileDisabled]}
         >
+          <LinearGradient colors={topHighlight} style={styles.sheen} pointerEvents="none" />
           <Text style={styles.value}>{value}</Text>
           {selected && (
             <View style={styles.badge}>
@@ -92,6 +93,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  sheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
   },
   tileDisabled: {
     opacity: 0.5,
