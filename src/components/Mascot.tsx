@@ -18,14 +18,14 @@ interface Props {
   pose: keyof typeof mascot;
   size?: number;
   style?: StyleProp<ImageStyle>;
-  /** Gentle up/down bob loop, like the mockup's .pf-bob (splash bear, daily-challenge bear). */
+  /** Gentle up/down bob loop, like the mockup's .pf-bob (splash mascot, daily-challenge mascot). */
   bob?: boolean;
-  /** Pop-in on mount, like the mockup's .pf-pop (lose/win bears). */
+  /** Pop-in on mount, like the mockup's .pf-pop (lose/win mascot). */
   popIn?: boolean;
   delay?: number;
 }
 
-/** The app's bear mascot in one of five poses, with the same motion language as the mockup. */
+/** The app's ninja mascot in one of five poses, with the same motion language as the mockup. */
 export function Mascot({ pose, size = 72, style, bob = false, popIn = false, delay = 0 }: Props) {
   const translateY = useSharedValue(0);
   const scale = useSharedValue(popIn ? 0.4 : 1);

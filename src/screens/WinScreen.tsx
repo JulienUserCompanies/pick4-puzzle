@@ -35,7 +35,7 @@ export default function WinScreen({ route, navigation }: Props) {
   const starsScale = useSharedValue(0.4);
   const pointsScale = useSharedValue(1);
 
-  // Device-tilt parallax on the mascot: hold the phone and the bear leans
+  // Device-tilt parallax on the mascot: hold the phone and it leans
   // with it, like the "juicy" reference the mockup's motion was modeled on.
   const tiltX = useSharedValue(0);
   const tiltY = useSharedValue(0);
@@ -69,7 +69,7 @@ export default function WinScreen({ route, navigation }: Props) {
         DeviceMotion.setUpdateInterval(60);
         subscription = DeviceMotion.addListener(({ rotation }) => {
           if (!rotation) return;
-          // Use the first reading as "neutral" so the bear starts centered
+          // Use the first reading as "neutral" so the mascot starts centered
           // whatever angle the player happens to be holding the phone at.
           if (!baseline.current) {
             baseline.current = { beta: rotation.beta, gamma: rotation.gamma };

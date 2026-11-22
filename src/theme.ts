@@ -121,11 +121,11 @@ export const fontWeights = {
   heavy: '800' as const,
 };
 
-/** The bear mascot, one image per emotional beat. */
+/** The ninja mascot, one image per emotional beat. */
 export const mascot = {
-  idle: require('../assets/mascot/bear-idle.png'),
-  waving: require('../assets/mascot/bear-waving.png'),
-  thinking: require('../assets/mascot/bear-thinking.png'),
-  confused: require('../assets/mascot/bear-confused.png'),
-  celebrating: require('../assets/mascot/bear-celebrating.png'),
+  idle: require('../assets/mascot/ninja-idle.png'),
+  waving: require('../assets/mascot/ninja-waving.png'),
+  thinking: require('../assets/mascot/ninja-thinking.png'),
+  confused: require('../assets/mascot/ninja-confused.png'),
+  celebrating: require('../assets/mascot/ninja-celebrating.png'),
 };
