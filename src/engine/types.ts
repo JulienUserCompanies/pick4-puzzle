@@ -1,4 +1,4 @@
-export type DifficultyTier = 'easy' | 'mid' | 'hard';
+export type DifficultyTier = 'easy' | 'mid' | 'hard' | 'expert';
 
 export interface Puzzle {
   /** The numbers shown on the grid, in display order. */

@@ -34,12 +34,28 @@ const TIERS: Record<DifficultyTier, DifficultyConfig> = {
     roundTo: 1,
     nearMissCount: 2,
   },
+  // Same "round → less round" idea as the tiers above, pushed one step
+  // further: numbers can now land on a half-step (7.5, 22.0, 40.5…)
+  // instead of only whole numbers. roundTo:0.5 stays exact in floating
+  // point (0.5 is a clean power-of-two fraction), so sums never drift the
+  // way e.g. 0.1-based steps would. Kept to the same nearMissCount as
+  // hard rather than stacking more near-misses on top — the decimals
+  // themselves are the added difficulty here, not a denser trap grid.
+  expert: {
+    tier: 'expert',
+    gridSize: 9,
+    pickCount: 4,
+    numberRange: [0.5, 50], // 99 possible rounded values
+    roundTo: 0.5,
+    nearMissCount: 2,
+  },
 };
 
 export function tierForLevel(level: number): DifficultyTier {
   if (level <= 10) return 'easy';
-  if (level <= 40) return 'mid';
-  return 'hard';
+  if (level <= 35) return 'mid';
+  if (level <= 50) return 'hard';
+  return 'expert';
 }
 
 export function configForLevel(level: number): DifficultyConfig {
