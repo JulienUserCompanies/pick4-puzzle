@@ -1,28 +1,49 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useProgress } from '../storage/ProgressContext';
-import { colors, radii, shadows } from '../theme';
+import { CHAPTER_SIZE, TOTAL_LEVELS, tierForLevel } from '../engine/difficulty';
+import { DifficultyTier } from '../engine/types';
+import { colors, radii, shadows, topHighlight } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Levels'>;
 
-const TOTAL_LEVELS = 60;
-
-function Stars({ count }: { count: number }) {
-  return (
-    <View style={styles.starsRow}>
-      {[0, 1, 2].map((i) => (
-        <Text key={i} style={[styles.star, i < count && styles.starFilled]}>
-          ★
-        </Text>
-      ))}
-    </View>
-  );
+interface Chapter {
+  index: number;
+  startLevel: number;
+  endLevel: number;
+  tier: DifficultyTier;
 }
 
+const TIER_COLORS: Record<DifficultyTier, [string, string]> = {
+  easy: [colors.blueGradTop, colors.blueGradBottom],
+  mid: [colors.greenGradTop, colors.greenGradBottom],
+  hard: [colors.orangeLight, colors.orangeDeep],
+  expert: [colors.purpleLight, colors.purpleDeep],
+};
+
+const TIER_LABELS: Record<DifficultyTier, string> = {
+  easy: 'Easy',
+  mid: 'Medium',
+  hard: 'Hard',
+  expert: 'Expert',
+};
+
+function buildChapters(): Chapter[] {
+  const chapters: Chapter[] = [];
+  for (let start = 1; start <= TOTAL_LEVELS; start += CHAPTER_SIZE) {
+    const end = Math.min(start + CHAPTER_SIZE - 1, TOTAL_LEVELS);
+    chapters.push({ index: chapters.length, startLevel: start, endLevel: end, tier: tierForLevel(start) });
+  }
+  return chapters;
+}
+
+/** Chapter-select screen — 1000 levels grouped into ~20-level chapters, since a single flat 1000-tile grid doesn't scale. Tapping an unlocked chapter opens ChapterLevelsScreen for that range. */
 export default function LevelsScreen({ navigation }: Props) {
   const { progress, loading } = useProgress();
+  const chapters = useMemo(buildChapters, []);
 
   if (loading) {
     return (
@@ -31,8 +52,6 @@ export default function LevelsScreen({ navigation }: Props) {
       </SafeAreaView>
     );
   }
-
-  const levels = Array.from({ length: TOTAL_LEVELS }, (_, i) => i + 1);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -48,32 +67,61 @@ export default function LevelsScreen({ navigation }: Props) {
       </View>
 
       <FlatList
-        data={levels}
-        keyExtractor={(level) => String(level)}
-        numColumns={4}
+        data={chapters}
+        keyExtractor={(chapter) => String(chapter.index)}
+        numColumns={2}
         contentContainerStyle={styles.grid}
-        renderItem={({ item: level }) => {
-          const unlocked = level <= progress.maxUnlockedLevel;
-          const stars = progress.starsByLevel[level] ?? 0;
+        renderItem={({ item: chapter }) => {
+          const unlocked = progress.maxUnlockedLevel >= chapter.startLevel;
+          let earnedStars = 0;
+          for (let level = chapter.startLevel; level <= chapter.endLevel; level++) {
+            earnedStars += progress.starsByLevel[level] ?? 0;
+          }
+          const maxStars = (chapter.endLevel - chapter.startLevel + 1) * 3;
+          const complete = earnedStars === maxStars;
+
           return (
             <Pressable
               disabled={!unlocked}
-              onPress={() => navigation.navigate('Game', { level })}
-              style={[
-                styles.levelTile,
-                !unlocked && styles.levelTileLocked,
-                stars > 0 && styles.levelTileEarned,
-              ]}
-              accessibilityLabel={unlocked ? `Level ${level}` : `Level ${level}, locked`}
+              onPress={() =>
+                navigation.navigate('ChapterLevels', {
+                  chapterIndex: chapter.index,
+                  startLevel: chapter.startLevel,
+                  endLevel: chapter.endLevel,
+                })
+              }
+              style={[styles.cardLedge, !unlocked && styles.cardLedgeLocked]}
+              accessibilityLabel={
+                unlocked
+                  ? `Chapter ${chapter.index + 1}, levels ${chapter.startLevel} to ${chapter.endLevel}`
+                  : `Chapter ${chapter.index + 1}, locked`
+              }
             >
-              {unlocked ? (
-                <>
-                  <Text style={styles.levelNumber}>{level}</Text>
-                  <Stars count={stars} />
-                </>
-              ) : (
-                <Text style={styles.lockIcon}>🔒</Text>
-              )}
+              <View style={[styles.card, unlocked && complete && styles.cardComplete]}>
+                {unlocked ? (
+                  <LinearGradient colors={TIER_COLORS[chapter.tier]} style={styles.iconBadge}>
+                    <LinearGradient colors={topHighlight} style={styles.iconBadgeSheen} pointerEvents="none" />
+                    <Text style={styles.iconBadgeText}>{chapter.index + 1}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.iconBadgeLocked}>
+                    <Text style={styles.lockIcon}>🔒</Text>
+                  </View>
+                )}
+                <Text style={styles.chapterTitle}>Chapter {chapter.index + 1}</Text>
+                <Text style={styles.chapterRange}>
+                  Levels {chapter.startLevel}–{chapter.endLevel}
+                </Text>
+                {unlocked && (
+                  <View style={styles.starsRow}>
+                    <Text style={styles.starsText}>★ {earnedStars}</Text>
+                    <Text style={styles.starsOutOf}>/ {maxStars}</Text>
+                  </View>
+                )}
+                <Text style={[styles.tierLabel, { color: TIER_COLORS[chapter.tier][1] }]}>
+                  {TIER_LABELS[chapter.tier]}
+                </Text>
+              </View>
             </Pressable>
           );
         }}
@@ -119,42 +167,92 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 24,
   },
-  levelTile: {
+  cardLedge: {
     flex: 1,
-    aspectRatio: 1,
     margin: 6,
-    borderRadius: radii.sm,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.soft,
+    borderRadius: radii.lg,
+    backgroundColor: '#E8D3B0',
+    paddingBottom: 4,
+    ...shadows.raised,
   },
-  levelTileLocked: {
-    opacity: 0.45,
+  cardLedgeLocked: {
+    backgroundColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
   },
-  levelTileEarned: {
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 10,
+  },
+  cardComplete: {
     backgroundColor: colors.cardAlt,
   },
-  levelNumber: {
-    color: colors.ink,
-    fontSize: 20,
-    fontWeight: '700',
+  iconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  iconBadgeSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  iconBadgeText: {
+    color: colors.white,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  iconBadgeLocked: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cardAlt,
+    marginBottom: 10,
   },
   lockIcon: {
     fontSize: 18,
   },
+  chapterTitle: {
+    color: colors.ink,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  chapterRange: {
+    color: colors.inkFaint,
+    fontSize: 11,
+    marginTop: 2,
+  },
   starsRow: {
     flexDirection: 'row',
-    marginTop: 4,
-    gap: 1,
+    alignItems: 'baseline',
+    marginTop: 8,
   },
-  star: {
-    color: colors.border,
-    fontSize: 11,
-  },
-  starFilled: {
+  starsText: {
     color: '#FFC107',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  starsOutOf: {
+    color: colors.inkFaint,
+    fontSize: 11,
+    marginLeft: 2,
+  },
+  tierLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 6,
   },
 });

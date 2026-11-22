@@ -10,6 +10,7 @@ import Onboarding1Screen from './src/screens/Onboarding1Screen';
 import Onboarding2Screen from './src/screens/Onboarding2Screen';
 import HomeScreen from './src/screens/HomeScreen';
 import LevelsScreen from './src/screens/LevelsScreen';
+import ChapterLevelsScreen from './src/screens/ChapterLevelsScreen';
 import DailyScreen from './src/screens/DailyScreen';
 import TimedScreen from './src/screens/TimedScreen';
 import TimedResultScreen from './src/screens/TimedResultScreen';
@@ -57,6 +58,7 @@ export default function App() {
             <Stack.Screen name="Onboarding2" component={Onboarding2Screen} />
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Levels" component={LevelsScreen} />
+            <Stack.Screen name="ChapterLevels" component={ChapterLevelsScreen} />
             <Stack.Screen name="Daily" component={DailyScreen} />
             <Stack.Screen name="Timed" component={TimedScreen} />
             <Stack.Screen name="TimedResult" component={TimedResultScreen} options={{ animation: 'fade' }} />

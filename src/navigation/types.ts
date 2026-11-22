@@ -6,6 +6,7 @@ export type RootStackParamList = {
   Onboarding2: undefined;
   Home: undefined;
   Levels: undefined;
+  ChapterLevels: { chapterIndex: number; startLevel: number; endLevel: number };
   Daily: undefined;
   Timed: undefined;
   TimedResult: { solved: number; isNewBest: boolean };
