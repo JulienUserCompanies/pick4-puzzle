@@ -51,10 +51,10 @@ export default function Onboarding2Screen({ navigation }: Props) {
           ))}
         </View>
       </View>
+      {/* 2 dots now, not 3 — this is page 2 of 2 (Splash's CTA counts as page 1). */}
       <View style={styles.dots}>
         <View style={styles.dot} />
         <View style={[styles.dot, styles.dotActive]} />
-        <View style={styles.dot} />
       </View>
       <GradientButton label="Get Started" onPress={getStarted} style={{ width: '100%' }} />
     </SafeAreaView>

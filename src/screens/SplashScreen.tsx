@@ -17,6 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { RootStackParamList } from '../navigation/types';
 import { Mascot } from '../components/Mascot';
+import { GradientButton } from '../components/GradientButton';
 import { colors, topHighlight } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
@@ -113,6 +114,8 @@ export default function SplashScreen({ navigation }: Props) {
   const titleScale = useSharedValue(0.4);
   const mascotOpacity = useSharedValue(0);
   const mascotScale = useSharedValue(0.5);
+  const ctaOpacity = useSharedValue(0);
+  const ctaTranslateY = useSharedValue(14);
 
   // Phone-tilt parallax — same technique as the Win screen: numbers and the
   // mascot drift gently as you tilt the phone, instead of sitting static.
@@ -125,6 +128,10 @@ export default function SplashScreen({ navigation }: Props) {
     titleScale.value = withDelay(120, withSpring(1, { damping: 10, stiffness: 160 }));
     mascotOpacity.value = withTiming(1, { duration: 260 });
     mascotScale.value = withSpring(1, { damping: 8, stiffness: 150 });
+    // CTA settles in a beat after everything else, so it doesn't feel like
+    // the whole screen just dumps itself on the player at once.
+    ctaOpacity.value = withDelay(500, withTiming(1, { duration: 260 }));
+    ctaTranslateY.value = withDelay(500, withSpring(0, { damping: 12, stiffness: 160 }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -161,20 +168,16 @@ export default function SplashScreen({ navigation }: Props) {
     };
   }, [tiltX, tiltY]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      const onboarded = await AsyncStorage.getItem(ONBOARDED_KEY);
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      if (cancelled) return;
-      navigation.replace(onboarded ? 'Home' : 'Onboarding1');
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [navigation]);
+  // Splash is now a real first page with its own CTA (per the design mockup,
+  // where the splash is tap-to-continue), not an auto-advancing loading
+  // screen. A returning player goes straight to Home; a first-time player
+  // goes to the single "How to Play" page — the separate "Build the Number"
+  // step that used to come before it is retired from this flow, so there
+  // are exactly two intro pages, matching what was asked for.
+  async function handlePlay() {
+    const onboarded = await AsyncStorage.getItem(ONBOARDED_KEY);
+    navigation.replace(onboarded ? 'Home' : 'Onboarding2');
+  }
 
   const titleStyle = useAnimatedStyle(() => ({
     opacity: titleOpacity.value,
@@ -188,6 +191,10 @@ export default function SplashScreen({ navigation }: Props) {
   // "closer to the viewer, more grounded" against the floating digits).
   const mascotTiltStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tiltX.value * 0.6 }, { translateY: tiltY.value * 0.6 }],
+  }));
+  const ctaStyle = useAnimatedStyle(() => ({
+    opacity: ctaOpacity.value,
+    transform: [{ translateY: ctaTranslateY.value }],
   }));
 
   return (
@@ -208,9 +215,9 @@ export default function SplashScreen({ navigation }: Props) {
         <Text style={styles.subtitle}>Number Puzzle Game</Text>
       </Animated.View>
 
-      <View style={styles.progressTrack}>
-        <View style={styles.progressFill} />
-      </View>
+      <Animated.View style={[styles.ctaWrap, ctaStyle]}>
+        <GradientButton label="Let's Play!" onPress={handlePlay} style={{ width: '100%' }} />
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -221,6 +228,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 36,
   },
   scene: {
     width: 240,
@@ -266,19 +275,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
-  progressTrack: {
+  ctaWrap: {
     position: 'absolute',
-    bottom: 54,
-    width: 180,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    width: '62%',
-    height: '100%',
-    backgroundColor: colors.orange,
-    borderRadius: 4,
+    bottom: 48,
+    left: 32,
+    right: 32,
   },
 });
