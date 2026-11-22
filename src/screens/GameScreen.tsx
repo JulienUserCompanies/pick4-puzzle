@@ -18,13 +18,13 @@ import { colors, radii, shadows, topHighlight } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
-type Feedback = 'none' | 'win' | 'lose' | 'dailyWin';
+type Feedback = 'none' | 'win' | 'lose' | 'failed' | 'dailyWin';
 
-/** 3 stars for a clean solve, 2 for one wrong submit, 1 for two or more. */
+const MAX_STARS = 3;
+
+/** 3 stars for a clean solve, 2 for one wrong attempt, 1 for two — a 3rd wrong attempt fails the level. */
 function starsForAttempts(wrongAttempts: number): number {
-  if (wrongAttempts === 0) return 3;
-  if (wrongAttempts === 1) return 2;
-  return 1;
+  return Math.max(MAX_STARS - wrongAttempts, 0);
 }
 
 export default function GameScreen({ route, navigation }: Props) {
@@ -45,24 +45,26 @@ export default function GameScreen({ route, navigation }: Props) {
   );
 
   const locked = feedback !== 'none';
+  const starsLeft = MAX_STARS - wrongAttempts;
 
+  // Every tap commits — there's no deselecting and no submit step. The 4th
+  // tap evaluates the pick immediately, so a wrong guess costs a star rather
+  // than being free to retry before confirming.
   function toggleTile(index: number) {
-    if (locked) return;
-    sfx.tap();
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else if (next.size < puzzle.pickCount) {
-        next.add(index);
-      }
-      return next;
-    });
+    if (locked || selected.has(index) || selected.size >= puzzle.pickCount) return;
+    const next = new Set(selected);
+    next.add(index);
+    setSelected(next);
+    if (next.size === puzzle.pickCount) {
+      evaluate(next);
+    } else {
+      sfx.tap();
+    }
   }
 
-  function submit() {
-    if (selected.size !== puzzle.pickCount || locked) return;
-    const won = runningTotal === puzzle.target;
+  function evaluate(picked: Set<number>) {
+    const total = [...picked].reduce((sum, i) => sum + puzzle.grid[i], 0);
+    const won = total === puzzle.target;
     if (won) {
       sfx.correct();
       if (daily) {
@@ -77,11 +79,13 @@ export default function GameScreen({ route, navigation }: Props) {
         setFeedback('win');
         navigation.navigate('Win', { level, stars });
       }
-    } else {
-      sfx.wrong();
-      setWrongAttempts((n) => n + 1);
-      setFeedback('lose');
+      return;
     }
+
+    sfx.wrong();
+    const nextWrong = wrongAttempts + 1;
+    setWrongAttempts(nextWrong);
+    setFeedback(nextWrong >= MAX_STARS ? 'failed' : 'lose');
   }
 
   function tryAgain() {
@@ -89,9 +93,16 @@ export default function GameScreen({ route, navigation }: Props) {
     setFeedback('none');
   }
 
-  function resetSelection() {
-    if (locked) return;
+  function retryLevel() {
     setSelected(new Set());
+    setWrongAttempts(0);
+    // A fresh puzzle for a fresh attempt, except on the Daily Challenge,
+    // where every player is solving the same fixed puzzle for the day.
+    if (!daily) {
+      setPuzzle(generatePuzzle(level));
+    }
+    startedAt.current = Date.now();
+    setFeedback('none');
   }
 
   const totalColor =
@@ -110,7 +121,13 @@ export default function GameScreen({ route, navigation }: Props) {
           <Text style={styles.backArrow}>←</Text>
         </Pressable>
         <Text style={styles.levelLabel}>{daily ? 'Daily Challenge' : `Level ${level}`}</Text>
-        <View style={{ width: 24 }} />
+        <View style={styles.livesRow}>
+          {Array.from({ length: MAX_STARS }).map((_, i) => (
+            <Text key={i} style={[styles.lifeStar, i < starsLeft && styles.lifeStarFilled]}>
+              ★
+            </Text>
+          ))}
+        </View>
       </View>
 
       <View style={styles.targetArea}>
@@ -141,36 +158,31 @@ export default function GameScreen({ route, navigation }: Props) {
             value={value}
             selected={selected.has(index)}
             onPress={() => toggleTile(index)}
-            disabled={locked}
+            disabled={locked || selected.has(index)}
           />
         ))}
       </View>
 
       {feedback === 'none' ? (
-        <View style={styles.actionsRow}>
-          <Pressable style={styles.resetButton} onPress={resetSelection}>
-            <View style={styles.resetLedge}>
-              <View style={styles.resetCircle}>
-                <LinearGradient colors={topHighlight} style={styles.resetSheen} pointerEvents="none" />
-                <Text style={styles.resetGlyph}>↺</Text>
-              </View>
-            </View>
-            <Text style={styles.resetLabel}>Reset</Text>
-          </Pressable>
-          <View style={{ flex: 1 }}>
-            <GradientButton
-              label={`Submit (${selected.size}/${puzzle.pickCount})`}
-              onPress={submit}
-              disabled={selected.size !== puzzle.pickCount}
-              glow={selected.size === puzzle.pickCount}
-            />
-          </View>
+        <View style={styles.hintRow}>
+          <Text style={styles.hintText}>
+            Tap {puzzle.pickCount} numbers — every tap counts, so choose carefully.
+          </Text>
         </View>
       ) : feedback === 'lose' ? (
         <View style={styles.loseArea}>
           <Mascot pose="confused" size={64} popIn />
-          <Text style={styles.loseText}>Not quite — try again!</Text>
+          <Text style={styles.loseText}>Not quite — lost a star.</Text>
           <GradientButton label="Try again" onPress={tryAgain} style={{ width: '100%' }} />
+        </View>
+      ) : feedback === 'failed' ? (
+        <View style={styles.loseArea}>
+          <Mascot pose="confused" size={64} popIn />
+          <Text style={styles.loseText}>Out of stars — level failed.</Text>
+          <GradientButton label="Retry level" onPress={retryLevel} style={{ width: '100%' }} />
+          <Text style={styles.secondaryLink} onPress={() => navigation.navigate('Home')}>
+            Back to Home
+          </Text>
         </View>
       ) : feedback === 'dailyWin' ? (
         <View style={styles.dailyWinArea}>
@@ -294,50 +306,25 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 20,
   },
-  actionsRow: {
+  livesRow: {
     flexDirection: 'row',
+    gap: 2,
+  },
+  lifeStar: {
+    color: colors.border,
+    fontSize: 16,
+  },
+  lifeStarFilled: {
+    color: '#FFC107',
+  },
+  hintRow: {
     alignItems: 'center',
-    gap: 14,
+    paddingVertical: 4,
   },
-  resetButton: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  resetLedge: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#E8D3B0',
-    paddingBottom: 3,
-    shadowColor: 'rgba(74,59,46,1)',
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  resetCircle: {
-    flex: 1,
-    borderRadius: 23,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  resetSheen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-  },
-  resetGlyph: {
-    color: colors.orange,
-    fontSize: 18,
-  },
-  resetLabel: {
-    color: colors.orange,
-    fontSize: 11,
-    fontWeight: '700',
+  hintText: {
+    color: colors.inkFaint,
+    fontSize: 13,
+    textAlign: 'center',
   },
   loseArea: {
     alignItems: 'center',
@@ -348,6 +335,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 2,
+  },
+  secondaryLink: {
+    color: colors.inkFaint,
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 4,
   },
   dailyWinArea: {
     alignItems: 'center',
